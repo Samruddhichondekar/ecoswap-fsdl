@@ -40,6 +40,22 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Root status endpoint
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'EcoSwap Cloud API Service',
+        version: '1.0.0',
+        activeClients: connectedClients,
+        endpoints: {
+            auth: '/api/auth',
+            items: '/api/items',
+            security: '/api/security',
+            health: '/api/health'
+        }
+    });
+});
+
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/items', itemRoutes);
 app.use('/api/auth', authRoutes);
