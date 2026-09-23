@@ -3,12 +3,19 @@ const router = express.Router();
 const securityController = require('../controllers/securityController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Public IAM policy and stats overview for instant inspection
+// All security routes require authentication
+router.use(authMiddleware);
+
+// Audit trail logs
+router.get('/logs', securityController.getSecurityLogs);
+
+// IAM role-permission policy
 router.get('/iam-policy', securityController.getIAMPolicy);
+
+// Security dashboard stats
 router.get('/stats', securityController.getSecurityStats);
 
-// Protected audit trail & API key generation
-router.get('/logs', authMiddleware, securityController.getSecurityLogs);
-router.post('/api-key', authMiddleware, securityController.generateApiKey);
+// Generate a new API key (SaaS feature)
+router.post('/api-key', securityController.generateApiKey);
 
 module.exports = router;

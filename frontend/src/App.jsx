@@ -50,7 +50,7 @@ function AppContent() {
                             <Route path="/signup" element={<AuthRoute><Signup /></AuthRoute>} />
                             <Route path="/add" element={<ProtectedRoute><AddItem /></ProtectedRoute>} />
                             <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
-                            <Route path="/security" element={<CloudSecurity />} />
+                            <Route path="/security" element={<ProtectedRoute><CloudSecurity /></ProtectedRoute>} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </main>

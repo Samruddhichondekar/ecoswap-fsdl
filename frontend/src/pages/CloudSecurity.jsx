@@ -24,21 +24,14 @@ const CloudSecurity = () => {
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [statsRes, policyRes] = await Promise.all([
-                    axios.get(`${API_URL}/security/stats`),
-                    axios.get(`${API_URL}/security/iam-policy`),
+                const [statsRes, policyRes, logsRes] = await Promise.all([
+                    axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+                    axios.get(`${API_URL}/security/iam-policy`, { headers: authHeaders }),
+                    axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
                 ]);
                 setStats(statsRes.data);
                 setPolicy(policyRes.data);
-
-                if (authHeaders?.Authorization) {
-                    try {
-                        const logsRes = await axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders });
-                        setLogs(logsRes.data);
-                    } catch {
-                        setLogs([]);
-                    }
-                }
+                setLogs(logsRes.data);
             } catch (err) {
                 console.error('Failed to load security data:', err);
             } finally {
