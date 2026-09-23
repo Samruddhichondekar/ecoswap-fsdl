@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Book, Cpu, Coffee, Package, MapPin, Tag, X, Mail, Share2, Eye, AlertCircle, Coins, HeartHandshake } from 'lucide-react';
 import { ToastContext } from '../App';
 import axios from 'axios';
+import { API_URL } from '../utils/config';
 import './ItemCard.css';
 
 const getCategoryIcon = (category) => {
@@ -39,7 +40,7 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange }) => {
     const handleContactClick = async () => {
         setShowModal(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items/${item._id}/views`);
+            const res = await axios.post(`${API_URL}/items/${item._id}/views`);
             setViews(res.data.views);
         } catch (err) { console.error(err); }
     };

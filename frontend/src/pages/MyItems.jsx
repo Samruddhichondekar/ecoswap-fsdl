@@ -3,6 +3,7 @@ import axios from 'axios';
 import { PackageOpen } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../utils/config';
 import './MyItems.css';
 
 const MyItems = () => {
@@ -14,7 +15,7 @@ const MyItems = () => {
     useEffect(() => {
         const fetchItems = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items`, {
+                const res = await axios.get(`${API_URL}/items`, {
                     params: { userId: user?._id },
                     headers: authHeaders
                 });
@@ -32,7 +33,7 @@ const MyItems = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this item?')) {
             try {
-                await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items/${id}`, {
+                await axios.delete(`${API_URL}/items/${id}`, {
                     headers: authHeaders
                 });
                 setItems(items.filter(item => item._id !== id));
@@ -45,7 +46,7 @@ const MyItems = () => {
 
     const handleStatusChange = async (id, newStatus) => {
         try {
-            const res = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items/${id}`, { status: newStatus }, {
+            const res = await axios.put(`${API_URL}/items/${id}`, { status: newStatus }, {
                 headers: authHeaders
             });
             setItems(items.map(item => item._id === id ? res.data : item));

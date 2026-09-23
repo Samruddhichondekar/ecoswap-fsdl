@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { API_URL } from '../utils/config';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
             }
             try {
                 axios.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
-                const res = await axios.get(`${API_URL}/api/auth/me`);
+                const res = await axios.get(`${API_URL}/auth/me`);
                 const validatedUser = {
                     _id: res.data._id,
                     name: res.data.name,
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = useCallback(async (email, password) => {
-        const res = await axios.post(`${API_URL}/api/auth/login`, {
+        const res = await axios.post(`${API_URL}/auth/login`, {
             email: email.trim().toLowerCase(),
             password
         });
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const register = useCallback(async (name, email, password, role = 'user') => {
-        const res = await axios.post(`${API_URL}/api/auth/register`, {
+        const res = await axios.post(`${API_URL}/auth/register`, {
             name: name.trim(),
             email: email.trim().toLowerCase(),
             password,

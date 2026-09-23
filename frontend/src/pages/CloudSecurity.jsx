@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ToastContext } from '../App';
 import './CloudSecurity.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { API_URL } from '../utils/config';
 
 const CloudSecurity = () => {
     const { authHeaders, user } = useAuth();
@@ -25,9 +25,9 @@ const CloudSecurity = () => {
         const fetchAll = async () => {
             try {
                 const [statsRes, policyRes, logsRes] = await Promise.all([
-                    axios.get(`${API_URL}/api/security/stats`, { headers: authHeaders }),
-                    axios.get(`${API_URL}/api/security/iam-policy`, { headers: authHeaders }),
-                    axios.get(`${API_URL}/api/security/logs?limit=50`, { headers: authHeaders }),
+                    axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+                    axios.get(`${API_URL}/security/iam-policy`, { headers: authHeaders }),
+                    axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
                 ]);
                 setStats(statsRes.data);
                 setPolicy(policyRes.data);
@@ -44,11 +44,11 @@ const CloudSecurity = () => {
     const handleGenerateKey = async () => {
         setLoadingKey(true);
         try {
-            const res = await axios.post(`${API_URL}/api/security/api-key`, {}, { headers: authHeaders });
+            const res = await axios.post(`${API_URL}/security/api-key`, {}, { headers: authHeaders });
             setApiKey(res.data.apiKey);
             addToast('New API key generated successfully!');
             // Refresh logs
-            const logsRes = await axios.get(`${API_URL}/api/security/logs?limit=50`, { headers: authHeaders });
+            const logsRes = await axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders });
             setLogs(logsRes.data);
         } catch {
             addToast('Failed to generate API key.');

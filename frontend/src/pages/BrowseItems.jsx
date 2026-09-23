@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Filter, LayoutGrid, List } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
+import { API_URL } from '../utils/config';
 import './BrowseItems.css';
 
 const CATEGORIES = ['All', 'Books', 'Electronics', 'Stationery', 'Furniture', 'Daily Use', 'Others'];
@@ -17,7 +18,7 @@ const BrowseItems = () => {
     useEffect(() => {
         const fetchItems = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items`);
+                const res = await axios.get(`${API_URL}/items`);
                 setItems(res.data);
             } catch (err) {
                 console.error('Error fetching items:', err);

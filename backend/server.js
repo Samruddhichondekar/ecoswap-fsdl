@@ -330,9 +330,9 @@ const connectDB = async () => {
 
         if (mongoUri) {
             try {
-                console.log(`Attempting to connect to MongoDB at ${mongoUri}...`);
-                await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 });
-                console.log('✅ Connected to Local MongoDB.');
+                console.log(`Attempting to connect to MongoDB at ${mongoUri.replace(/:([^:@]{1,})@/, ':****@')}...`);
+                await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
+                console.log('✅ Connected to MongoDB.');
                 connected = true;
             } catch (e) {
                 console.log(`❌ Failed: ${e.message}. Falling back to in-memory server...`);

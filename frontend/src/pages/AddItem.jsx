@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../utils/config';
 import './AddItem.css';
 
 const CATEGORIES = ['Books', 'Electronics', 'Stationery', 'Furniture', 'Daily Use', 'Others'];
@@ -67,7 +68,7 @@ const AddItem = () => {
 
         setLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items`, processedData, {
+            await axios.post(`${API_URL}/items`, processedData, {
                 headers: authHeaders
             });
             addToast('Item added successfully!');

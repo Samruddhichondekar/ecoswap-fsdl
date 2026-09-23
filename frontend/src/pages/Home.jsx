@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowRight, Book, Droplets, HeartHandshake, Lightbulb, Recycle, RefreshCw, Sprout, TrendingDown, Wrench } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
+import { API_URL } from '../utils/config';
 import './Home.css';
 
 const TIPS = [
@@ -25,7 +26,7 @@ const Home = () => {
 
         const fetchItems = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/items`);
+                const res = await axios.get(`${API_URL}/items`);
                 const available = res.data.filter(item => item.status === 'Available');
                 available.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 setFeaturedItems(available.slice(0, 4));
