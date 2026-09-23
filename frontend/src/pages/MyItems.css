@@ -1,0 +1,8 @@
+.my-items-page {
+    padding-bottom: 4rem;
+}
+
+.empty-icon {
+    margin-bottom: 1rem;
+    color: var(--eco-primary);
+}

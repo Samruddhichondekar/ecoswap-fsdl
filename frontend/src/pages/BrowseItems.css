@@ -1,0 +1,154 @@
+.browse-page {
+    padding-bottom: 4rem;
+}
+
+.page-header {
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    font-size: 1.125rem;
+}
+
+.filters-section {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    background: var(--eco-surface);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+.search-bar {
+    flex: 2;
+    min-width: 300px;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-bar .form-control {
+    padding-left: 3.5rem;
+}
+
+.filter-controls-group {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+    min-width: 300px;
+}
+
+.category-filter {
+    flex: 1;
+    position: relative;
+}
+
+.filter-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    z-index: 10;
+}
+
+.category-filter .form-control {
+    padding-left: 3.5rem;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+.sort-select {
+    width: auto;
+}
+
+.layout-toggles {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.layout-toggles .btn-icon {
+    background: var(--eco-bg);
+    border: 1px solid var(--border-light);
+}
+
+.layout-toggles .btn-icon.active {
+    background: var(--eco-primary);
+    color: #111827;
+    border-color: var(--eco-primary);
+}
+
+.items-container.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.items-container.list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.items-container.list .item-card {
+    flex-direction: row;
+    height: 250px;
+}
+
+.items-container.list .item-img-container {
+    width: 300px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.loading-state,
+.empty-state {
+    text-align: center;
+    padding: 4rem;
+    background: var(--eco-surface);
+    border-radius: var(--radius-lg);
+    color: var(--text-muted);
+    border: 2px dashed var(--border-light);
+}
+
+.empty-state h3 {
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .filter-controls-group {
+        flex-wrap: wrap;
+    }
+
+    .items-container.list .item-card {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .items-container.list .item-img-container {
+        width: 100%;
+        height: 220px;
+    }
+}

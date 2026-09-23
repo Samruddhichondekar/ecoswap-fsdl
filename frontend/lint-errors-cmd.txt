@@ -1,0 +1,28 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+C:\Users\samru\OneDrive\Desktop\fsdlproject\frontend\src\App.jsx
+  13:14  error  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file  react-refresh/only-export-components
+
+C:\Users\samru\OneDrive\Desktop\fsdlproject\frontend\src\contexts\ThemeContext.jsx
+   3:14  error  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-refresh/only-export-components
+  13:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  11 |
+  12 |         if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+> 13 |             setIsDark(true);
+     |             ^^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |             document.documentElement.setAttribute('data-theme', 'dark');
+  15 |         }
+  16 |     }, []);  react-hooks/set-state-in-effect
+
+✖ 3 problems (3 errors, 0 warnings)
+

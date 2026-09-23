@@ -1,0 +1,313 @@
+/* ── Cloud Security Dashboard ── */
+
+.security-page {
+    padding: 2rem 0 4rem;
+}
+
+.security-page .page-header {
+    margin-bottom: 2rem;
+}
+
+.security-page .page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.security-page .page-header p {
+    color: var(--text-secondary);
+    margin-top: 0.3rem;
+    font-size: 1rem;
+}
+
+/* Stats Cards */
+.security-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.sec-stat-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.2rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sec-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.sec-stat-card .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.3rem;
+}
+
+.sec-stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.sec-stat-card .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Section headers */
+.sec-section {
+    margin-bottom: 2.5rem;
+}
+
+.sec-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sec-section-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* IAM Policy Table */
+.iam-roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+}
+
+.iam-role-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.4rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.iam-role-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.iam-role-card .role-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.iam-role-card .role-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.iam-role-card .perm-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.iam-role-card .perm-list li {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.5rem;
+    background: var(--bg-secondary, #f9fafb);
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.3px;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.user {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.role-badge.admin {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.role-badge.auditor {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+/* API Key Section */
+.api-key-section {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.5rem;
+}
+
+.api-key-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.api-key-value {
+    background: var(--bg-secondary, #f1f5f9);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    flex: 1;
+    min-width: 200px;
+    border: 1px dashed var(--border-light, #d1d5db);
+}
+
+.api-key-info {
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+}
+
+/* Audit Trail Table */
+.audit-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-light, #e5e7eb);
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.audit-table th {
+    background: var(--bg-secondary, #f8fafc);
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border-light, #e5e7eb);
+    white-space: nowrap;
+}
+
+.audit-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border-light, #f1f5f9);
+    vertical-align: middle;
+}
+
+.audit-table tbody tr:hover {
+    background: var(--bg-secondary, #f9fafb);
+}
+
+.audit-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.event-badge {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+.event-badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.event-badge.failure {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.event-badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.cloud-concepts-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.cloud-concept-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+.empty-logs {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+    .security-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .iam-roles-grid {
+        grid-template-columns: 1fr;
+    }
+    .api-key-display {
+        flex-direction: column;
+    }
+}
