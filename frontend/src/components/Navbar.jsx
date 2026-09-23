@@ -54,20 +54,18 @@ const Navbar = () => {
                         </Link>
                     </li>
                     {isAuthenticated && (
-                        <>
-                            <li>
-                                <Link to="/my-items" className={`nav-link ${isActive('/my-items') ? 'active' : ''}`}>
-                                    My Items
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/security" className={`nav-link ${isActive('/security') ? 'active' : ''}`}>
-                                    <Shield size={15} style={{ marginRight: 3, verticalAlign: 'middle' }} />
-                                    Security
-                                </Link>
-                            </li>
-                        </>
+                        <li>
+                            <Link to="/my-items" className={`nav-link ${isActive('/my-items') ? 'active' : ''}`}>
+                                My Items
+                            </Link>
+                        </li>
                     )}
+                    <li>
+                        <Link to="/security" className={`nav-link ${isActive('/security') ? 'active' : ''}`}>
+                            <Shield size={16} style={{ marginRight: 5, verticalAlign: 'middle', color: '#10b981' }} />
+                            Security
+                        </Link>
+                    </li>
                 </ul>
 
                 {/* Right Actions */}
@@ -89,17 +87,28 @@ const Navbar = () => {
                                 >
                                     <div className="user-avatar">{getInitials(user?.name)}</div>
                                     <span className="user-name-label">{user?.name?.split(' ')[0]}</span>
+                                    <span className={`role-badge role-${user?.role || 'user'}`}>
+                                        {user?.role === 'admin' ? '👑 Admin' : user?.role === 'auditor' ? '🛡️ Auditor' : '👤 User'}
+                                    </span>
                                     <ChevronDown size={15} className={`chevron ${dropdownOpen ? 'open' : ''}`} />
                                 </button>
                                 {dropdownOpen && (
                                     <div className="user-dropdown">
                                         <div className="dropdown-header">
-                                            <strong>{user?.name}</strong>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                <strong>{user?.name}</strong>
+                                                <span className={`role-badge role-${user?.role || 'user'}`}>
+                                                    {user?.role?.toUpperCase() || 'USER'}
+                                                </span>
+                                            </div>
                                             <span>{user?.email}</span>
                                         </div>
                                         <div className="dropdown-divider" />
                                         <Link to="/my-items" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                                             <User size={15} /> My Items
+                                        </Link>
+                                        <Link to="/security" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                            <Shield size={15} /> Security & IAM
                                         </Link>
                                         <button className="dropdown-item dropdown-logout" onClick={handleLogout}>
                                             <LogOut size={15} /> Sign Out
