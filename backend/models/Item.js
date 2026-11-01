@@ -7,6 +7,7 @@ const itemSchema = new mongoose.Schema({
     condition: { type: String, required: true, default: 'Good' },
     location: { type: String, required: true, default: 'Campus' },
     imageUrl: { type: String, required: true },
+    s3Key: { type: String, default: '' },
     contact: { type: String, required: true },
     status: { type: String, enum: ['Available', 'Exchanged'], default: 'Available' },
 

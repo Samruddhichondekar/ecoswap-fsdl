@@ -129,3 +129,35 @@ exports.getMe = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const { name, bio, avatar } = req.body;
+        const updates = {};
+        if (name && name.trim().length >= 2) updates.name = name.trim();
+        if (bio !== undefined) updates.bio = bio.trim();
+        if (avatar !== undefined) updates.avatar = avatar.trim();
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            { $set: updates },
+            { returnDocument: 'after' }
+        ).select('-passwordHash -apiKey');
+
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        res.json({
+            message: 'Profile updated successfully.',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                bio: user.bio,
+                avatar: user.avatar,
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

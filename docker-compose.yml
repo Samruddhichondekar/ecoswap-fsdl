@@ -1,0 +1,44 @@
+# ==========================================
+# EcoSwap Cloud Multi-Container Compose Stack
+# Cloud Computing Lab (CCL) - Task 9
+# ==========================================
+
+services:
+  ecoswap-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecoswap-api
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - PORT=5050
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/ecoswap
+      - JWT_SECRET=ecoswap_docker_jwt_secret_demo
+      - CLIENT_URL=http://localhost:5173,http://localhost:3000
+    depends_on:
+      - mongo
+    networks:
+      - ecoswap-net
+
+  mongo:
+    image: mongo:7.0
+    container_name: ecoswap-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ecoswap-net
+
+networks:
+  ecoswap-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+

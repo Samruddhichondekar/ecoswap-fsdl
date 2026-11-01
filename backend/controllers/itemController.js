@@ -1,4 +1,31 @@
 const Item = require('../models/Item');
+const { uploadFileToS3, deleteFileFromS3 } = require('../services/s3Service');
+
+/**
+ * Upload an image file directly to AWS S3.
+ */
+exports.uploadImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image file uploaded.' });
+        }
+
+        const result = await uploadFileToS3(
+            req.file.buffer,
+            req.file.originalname,
+            req.file.mimetype
+        );
+
+        res.status(200).json({
+            message: 'Image uploaded successfully to AWS S3.',
+            imageUrl: result.imageUrl,
+            s3Key: result.s3Key,
+            isSimulated: result.isSimulated,
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message || 'Image upload failed.' });
+    }
+};
 
 exports.getItems = async (req, res) => {
     try {
@@ -31,6 +58,7 @@ exports.createItem = async (req, res) => {
             description: req.body.description?.trim(),
             location: req.body.location?.trim(),
             imageUrl: req.body.imageUrl?.trim(),
+            s3Key: req.body.s3Key?.trim() || '',
             contact: req.body.contact?.trim().toLowerCase() || req.user.email,
             postedBy: req.user.userId,
             price: ['Sell', 'Rent'].includes(req.body.transactionType) ? Number(req.body.price || 0) : 0,
@@ -59,6 +87,7 @@ exports.updateItem = async (req, res) => {
             'condition',
             'location',
             'imageUrl',
+            's3Key',
             'contact',
             'status',
             'transactionType',
@@ -66,6 +95,11 @@ exports.updateItem = async (req, res) => {
             'tags',
             'urgent'
         ];
+
+        // Clean up old S3 image if a new image was uploaded
+        if (req.body.s3Key && item.s3Key && req.body.s3Key !== item.s3Key) {
+            await deleteFileFromS3(item.s3Key);
+        }
 
         allowedUpdates.forEach((key) => {
             if (req.body[key] !== undefined) item[key] = req.body[key];
@@ -86,8 +120,14 @@ exports.deleteItem = async (req, res) => {
         if (item.postedBy && item.postedBy.toString() !== req.user.userId) {
             return res.status(403).json({ message: 'You can only delete items you posted.' });
         }
+
+        // Delete associated S3 object if present
+        if (item.s3Key) {
+            await deleteFileFromS3(item.s3Key);
+        }
+
         await item.deleteOne();
-        res.json({ message: 'Item deleted' });
+        res.json({ message: 'Item deleted and associated cloud assets purged.' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

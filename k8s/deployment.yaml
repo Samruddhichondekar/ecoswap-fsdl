@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecoswap-backend-deployment
+  labels:
+    app: ecoswap
+    tier: backend
+spec:
+  replicas: 2 # Horizontal Pod scaling for high availability
+  selector:
+    matchLabels:
+      app: ecoswap
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: ecoswap
+        tier: backend
+    spec:
+      containers:
+        - name: ecoswap-api
+          image: ecoswap-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5050
+              name: http
+          envFrom:
+            - configMapRef:
+                name: ecoswap-config
+            - secretRef:
+                name: ecoswap-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Liveness probe to ensure pod process is alive
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5050
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          # Readiness probe before routing ingress traffic
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5050
+            initialDelaySeconds: 10
+            periodSeconds: 10
+

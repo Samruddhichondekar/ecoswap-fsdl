@@ -9,14 +9,44 @@ require('dotenv').config();
 const itemRoutes = require('./routes/itemRoutes');
 const authRoutes = require('./routes/authRoutes');
 const securityRoutes = require('./routes/securityRoutes');
+const swapRoutes = require('./routes/swapRoutes');
 const Item = require('./models/Item');
 
 const app = express();
 const server = http.createServer(app);
 
+// ── CORS & Cloud Origins ─────────────────────────────────────────
+const clientUrl = process.env.CLIENT_URL;
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:5050',
+];
+if (clientUrl) {
+    clientUrl.split(',').forEach(u => {
+        const trimmed = u.trim().replace(/\/+$/, '');
+        if (trimmed && !allowedOrigins.includes(trimmed)) allowedOrigins.push(trimmed);
+    });
+}
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+        return callback(new Error(`CORS Error: Origin ${origin} not permitted.`));
+    },
+    credentials: true,
+};
+
 // ── Socket.IO ──────────────────────────────────────────────────
 const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
+    cors: {
+        origin: allowedOrigins,
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true
+    }
 });
 
 let connectedClients = 0;
@@ -37,7 +67,7 @@ app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Root status endpoint
@@ -50,6 +80,7 @@ app.get('/', (req, res) => {
         endpoints: {
             auth: '/api/auth',
             items: '/api/items',
+            swaps: '/api/swaps',
             security: '/api/security',
             health: '/api/health'
         }
@@ -60,6 +91,7 @@ app.get('/', (req, res) => {
 app.use('/api/items', itemRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/security', securityRoutes);
+app.use('/api/swaps', swapRoutes);
 
 // View increment — broadcasts real-time update to all clients
 app.post('/api/items/:id/views', async (req, res) => {
@@ -80,9 +112,30 @@ app.post('/api/items/:id/views', async (req, res) => {
     }
 });
 
-// Health check
+// Health check — reports server, process and database connection status
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', clients: connectedClients, timestamp: new Date().toISOString() });
+    const dbStatusMap = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting',
+    };
+    const dbState = mongoose.connection.readyState;
+    const isHealthy = dbState === 1;
+
+    res.status(isHealthy ? 200 : 503).json({
+        status: isHealthy ? 'ok' : 'degraded',
+        server: 'running',
+        uptime: Math.floor(process.uptime()),
+        database: {
+            status: dbStatusMap[dbState] || 'unknown',
+            readyState: dbState,
+            name: mongoose.connection.name || 'ecoswap',
+        },
+        activeClients: connectedClients,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+    });
 });
 
 // ── Seed Data ──────────────────────────────────────────────────
@@ -338,20 +391,30 @@ const seedDatabase = async () => {
     console.log('Seeded database with demo listings.');
 };
 
-// ── DB Connection ──────────────────────────────────────────────
+// ── DB Connection (DBaaS & Resilient Fallback) ─────────────────
 const connectDB = async () => {
     try {
         let mongoUri = process.env.MONGO_URI;
         let connected = false;
 
-        if (mongoUri) {
+        if (mongoUri && (mongoUri.startsWith('mongodb+srv://') || mongoUri.includes('mongodb.net'))) {
             try {
-                console.log(`Attempting to connect to MongoDB at ${mongoUri.replace(/:([^:@]{1,})@/, ':****@')}...`);
-                await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
-                console.log('✅ Connected to MongoDB.');
+                const maskedUri = mongoUri.replace(/:([^:@]{1,})@/, ':****@');
+                console.log(`[DBaaS] Connecting to MongoDB Atlas Cloud Database at ${maskedUri}...`);
+                await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 8000 });
+                console.log('✅ Connected to MongoDB Atlas (DBaaS). Data persists in the cloud.');
                 connected = true;
             } catch (e) {
-                console.log(`❌ Failed: ${e.message}. Falling back to in-memory server...`);
+                console.warn(`[DBaaS Warning] Could not connect to Atlas (${e.message}). Falling back to resilient in-memory database...`);
+            }
+        } else if (mongoUri) {
+            try {
+                console.log(`[Database] Connecting to local MongoDB at ${mongoUri}...`);
+                await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
+                console.log('✅ Connected to Local MongoDB.');
+                connected = true;
+            } catch (e) {
+                console.log(`[Database Notice] Local MongoDB offline. Falling back to resilient in-memory database...`);
             }
         }
 
@@ -359,16 +422,16 @@ const connectDB = async () => {
             const mongoServer = await MongoMemoryServer.create();
             mongoUri = mongoServer.getUri();
             await mongoose.connect(mongoUri);
-            console.log(`✅ Connected to MongoDB Memory Server at ${mongoUri}`);
+            console.log(`✅ Connected to MongoDB In-Memory Server at ${mongoUri}`);
         }
 
         await seedDatabase();
 
         server.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT} — Socket.IO active`);
+            console.log(`🚀 EcoSwap Cloud Service running on port ${PORT} — Socket.IO active`);
         });
     } catch (err) {
-        console.error('Core MongoDB Connection Error:', err);
+        console.error('Fatal Database Connection Error:', err);
         process.exit(1);
     }
 };
