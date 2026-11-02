@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import {
     Shield, ShieldCheck, ShieldAlert, Key, Copy, RefreshCw,
-    Users, Activity, Lock, CheckCircle2, AlertTriangle, Cloud, Server, Database
+    Users, Activity, Lock, CheckCircle2, AlertTriangle, Cloud, Server, Database, UserCheck
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ToastContext } from '../App';
@@ -17,21 +17,32 @@ const CloudSecurity = () => {
     const [stats, setStats] = useState(null);
     const [policy, setPolicy] = useState(null);
     const [logs, setLogs] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
     const [apiKey, setApiKey] = useState('');
     const [loadingKey, setLoadingKey] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [updatingRoleId, setUpdatingRoleId] = useState(null);
 
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [statsRes, policyRes, logsRes] = await Promise.all([
+                const requests = [
                     axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
                     axios.get(`${API_URL}/security/iam-policy`, { headers: authHeaders }),
                     axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
-                ]);
-                setStats(statsRes.data);
-                setPolicy(policyRes.data);
-                setLogs(logsRes.data);
+                ];
+
+                if (user?.role === 'admin') {
+                    requests.push(axios.get(`${API_URL}/security/users`, { headers: authHeaders }));
+                }
+
+                const results = await Promise.all(requests);
+                setStats(results[0].data);
+                setPolicy(results[1].data);
+                setLogs(results[2].data);
+                if (user?.role === 'admin' && results[3]) {
+                    setAllUsers(results[3].data);
+                }
             } catch (err) {
                 console.error('Failed to load security data:', err);
             } finally {
@@ -39,7 +50,7 @@ const CloudSecurity = () => {
             }
         };
         fetchAll();
-    }, [authHeaders]);
+    }, [authHeaders, user?.role]);
 
     const handleGenerateKey = async () => {
         setLoadingKey(true);
@@ -54,6 +65,30 @@ const CloudSecurity = () => {
             addToast('Failed to generate API key.');
         } finally {
             setLoadingKey(false);
+        }
+    };
+
+    const handleRoleChange = async (targetUserId, newRole) => {
+        setUpdatingRoleId(targetUserId);
+        try {
+            const res = await axios.put(
+                `${API_URL}/security/users/${targetUserId}/role`,
+                { role: newRole },
+                { headers: authHeaders }
+            );
+            setAllUsers(prev => prev.map(u => u._id === targetUserId ? res.data.user : u));
+            addToast(`Updated user role to ${newRole.toUpperCase()}!`);
+            // Refresh logs and stats
+            const [logsRes, statsRes] = await Promise.all([
+                axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
+                axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+            ]);
+            setLogs(logsRes.data);
+            setStats(statsRes.data);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to update user role.');
+        } finally {
+            setUpdatingRoleId(null);
         }
     };
 
@@ -149,17 +184,20 @@ const CloudSecurity = () => {
                 </div>
             )}
 
-            {/* IAM Roles & Permissions */}
+            {/* IAM Roles & Permissions Matrix */}
             {policy && (
                 <div className="sec-section">
                     <div className="sec-section-header">
                         <h2><ShieldCheck size={22} /> IAM Role-Permission Matrix</h2>
-                        <span className="role-badge {user?.role}">{user?.role?.toUpperCase()} (You)</span>
+                        <span className={`role-badge ${user?.role}`}>{user?.role?.toUpperCase()} (You)</span>
                     </div>
                     <div className="iam-roles-grid">
                         {policy.roles.map(r => (
-                            <div key={r.role} className={`iam-role-card ${r.role === user?.role ? 'active' : ''}`}
-                                 style={r.role === user?.role ? { borderColor: 'var(--eco-primary, #16a34a)', borderWidth: 2 } : {}}>
+                            <div
+                                key={r.role}
+                                className={`iam-role-card ${r.role === user?.role ? 'active' : ''}`}
+                                style={r.role === user?.role ? { borderColor: 'var(--eco-primary, #16a34a)', borderWidth: 2 } : {}}
+                            >
                                 <div className="role-title">
                                     <span className={`role-badge ${r.role}`}>{r.role}</span>
                                     {r.role === user?.role && <CheckCircle2 size={16} color="var(--eco-primary, #16a34a)" />}
@@ -175,6 +213,58 @@ const CloudSecurity = () => {
                                 </ul>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Admin-Only User Management Section */}
+            {user?.role === 'admin' && (
+                <div className="sec-section">
+                    <div className="sec-section-header">
+                        <h2><UserCheck size={22} /> IAM User Administration (Cloud Admin Only)</h2>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--eco-primary)', fontWeight: 600 }}>
+                            {allUsers.length} Active Accounts
+                        </span>
+                    </div>
+                    <div className="audit-table-wrap">
+                        <table className="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Joined</th>
+                                    <th>Assigned Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allUsers.map(u => (
+                                    <tr key={u._id}>
+                                        <td><strong>{u.name}</strong> {u._id === user?._id && <span style={{ fontSize: '0.75rem', color: 'var(--eco-primary)' }}>(You)</span>}</td>
+                                        <td>{u.email}</td>
+                                        <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td>
+                                            <span className={`role-badge ${u.role}`}>
+                                                {u.role?.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <select
+                                                className="form-control"
+                                                style={{ padding: '4px 8px', fontSize: '0.85rem', width: 'auto' }}
+                                                value={u.role}
+                                                disabled={updatingRoleId === u._id}
+                                                onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                                            >
+                                                <option value="user">User</option>
+                                                <option value="admin">Admin</option>
+                                                <option value="auditor">Auditor</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}

@@ -76,7 +76,10 @@ exports.updateItem = async (req, res) => {
     try {
         const item = await Item.findById(req.params.id);
         if (!item) return res.status(404).json({ message: 'Item not found' });
-        if (item.postedBy && item.postedBy.toString() !== req.user.userId) {
+        
+        const isOwner = item.postedBy && item.postedBy.toString() === req.user.userId;
+        const isAdmin = req.user.role === 'admin';
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({ message: 'You can only update items you posted.' });
         }
 
@@ -117,7 +120,10 @@ exports.deleteItem = async (req, res) => {
     try {
         const item = await Item.findById(req.params.id);
         if (!item) return res.status(404).json({ message: 'Item not found' });
-        if (item.postedBy && item.postedBy.toString() !== req.user.userId) {
+        
+        const isOwner = item.postedBy && item.postedBy.toString() === req.user.userId;
+        const isAdmin = req.user.role === 'admin';
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({ message: 'You can only delete items you posted.' });
         }
 
