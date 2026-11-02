@@ -1,6 +1,7 @@
 const Item = require('../models/Item');
 const User = require('../models/User');
 const { uploadFileToS3, deleteFileFromS3 } = require('../services/s3Service');
+const { logSecurityEvent } = require('../middleware/securityMiddleware');
 
 /**
  * Upload an image file directly to AWS S3.
@@ -34,7 +35,7 @@ exports.getItems = async (req, res) => {
         if (req.query.userId) {
             filter.postedBy = req.query.userId;
         }
-        const items = await Item.find(filter).sort({ createdAt: -1 });
+        const items = await Item.find(filter).populate('postedBy', 'name email role').sort({ createdAt: -1 });
         res.json(items);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -111,6 +112,19 @@ exports.updateItem = async (req, res) => {
 
         if (!['Sell', 'Rent'].includes(item.transactionType)) item.price = 0;
         const updatedItem = await item.save();
+
+        if (isAdmin && !isOwner) {
+            await logSecurityEvent({
+                eventType: 'ADMIN_ITEM_UPDATED',
+                userId: req.user.userId,
+                userEmail: req.user.email,
+                ipAddress: req.ip || '',
+                userAgent: req.headers['user-agent'] || '',
+                status: 'SUCCESS',
+                details: `Admin updated listing "${item.title}" (status: ${item.status})`,
+            });
+        }
+
         res.json(updatedItem);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -134,6 +148,19 @@ exports.deleteItem = async (req, res) => {
         }
 
         await item.deleteOne();
+
+        if (isAdmin && !isOwner) {
+            await logSecurityEvent({
+                eventType: 'ADMIN_ITEM_DELETED',
+                userId: req.user.userId,
+                userEmail: req.user.email,
+                ipAddress: req.ip || '',
+                userAgent: req.headers['user-agent'] || '',
+                status: 'SUCCESS',
+                details: `Admin deleted listing "${item.title}" (ID: ${item._id})`,
+            });
+        }
+
         res.json({ message: 'Item deleted and associated cloud assets purged.' });
     } catch (err) {
         res.status(500).json({ message: err.message });

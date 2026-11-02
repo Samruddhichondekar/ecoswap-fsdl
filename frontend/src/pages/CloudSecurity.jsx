@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     Shield, ShieldCheck, ShieldAlert, RefreshCw,
     Users, Activity, Lock, CheckCircle2, AlertTriangle, Cloud, Server, Database,
-    UserCheck, HardDrive, Radio, Gauge
+    UserCheck, HardDrive, Radio, Gauge, Package, Trash2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ToastContext } from '../App';
@@ -19,6 +19,9 @@ const CloudSecurity = () => {
     const [policy, setPolicy] = useState(null);
     const [logs, setLogs] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
+    const [allItems, setAllItems] = useState([]);
+    const [itemSearch, setItemSearch] = useState('');
+    const [deletingItemId, setDeletingItemId] = useState(null);
     const [diagnostics, setDiagnostics] = useState(null);
     const [pinging, setPinging] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -36,6 +39,7 @@ const CloudSecurity = () => {
 
                 if (user?.role === 'admin') {
                     requests.push(axios.get(`${API_URL}/security/users`, { headers: authHeaders }));
+                    requests.push(axios.get(`${API_URL}/items`));
                 }
 
                 const results = await Promise.all(requests);
@@ -43,8 +47,9 @@ const CloudSecurity = () => {
                 setPolicy(results[1].data);
                 setLogs(results[2].data);
                 setDiagnostics(results[3].data);
-                if (user?.role === 'admin' && results[4]) {
-                    setAllUsers(results[4].data);
+                if (user?.role === 'admin') {
+                    if (results[4]) setAllUsers(results[4].data);
+                    if (results[5]) setAllItems(results[5].data);
                 }
             } catch (err) {
                 console.error('Failed to load security data:', err);
@@ -89,6 +94,50 @@ const CloudSecurity = () => {
             addToast(err.response?.data?.message || 'Failed to update user role.');
         } finally {
             setUpdatingRoleId(null);
+        }
+    };
+
+    const handleAdminDeleteItem = async (itemId, itemTitle) => {
+        if (!window.confirm(`[Admin Action] Permanently remove "${itemTitle}" from campus?\nThis purges all associated cloud assets from AWS S3 and MongoDB Atlas.`)) {
+            return;
+        }
+        setDeletingItemId(itemId);
+        try {
+            await axios.delete(`${API_URL}/items/${itemId}`, { headers: authHeaders });
+            setAllItems(prev => prev.filter(i => i._id !== itemId));
+            addToast(`[Admin] Successfully removed "${itemTitle}".`);
+            // Refresh audit logs and stats to reflect ADMIN_ITEM_DELETED
+            const [logsRes, statsRes] = await Promise.all([
+                axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
+                axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+            ]);
+            setLogs(logsRes.data);
+            setStats(statsRes.data);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to delete listing.');
+        } finally {
+            setDeletingItemId(null);
+        }
+    };
+
+    const handleAdminToggleItemStatus = async (itemId, currentStatus) => {
+        const nextStatus = currentStatus === 'Available' ? 'Exchanged' : 'Available';
+        try {
+            const res = await axios.put(
+                `${API_URL}/items/${itemId}`,
+                { status: nextStatus },
+                { headers: authHeaders }
+            );
+            setAllItems(prev => prev.map(i => i._id === itemId ? res.data : i));
+            addToast(`Item status changed to "${nextStatus}".`);
+            const [logsRes, statsRes] = await Promise.all([
+                axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
+                axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+            ]);
+            setLogs(logsRes.data);
+            setStats(statsRes.data);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to update item status.');
         }
     };
 
@@ -167,10 +216,10 @@ const CloudSecurity = () => {
                     </div>
                     <div className="sec-stat-card">
                         <div className="stat-icon" style={{ background: '#e0f2fe' }}>
-                            <Database size={20} color="#0284c7" />
+                            <Package size={20} color="#0284c7" />
                         </div>
-                        <span className="stat-value">90d</span>
-                        <span className="stat-label">Log Retention</span>
+                        <span className="stat-value">{stats.totalItems ?? allItems.length}</span>
+                        <span className="stat-label">Campus Listings</span>
                     </div>
                 </div>
             )}
@@ -254,6 +303,111 @@ const CloudSecurity = () => {
                                         </td>
                                     </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin-Only Campus Listings Moderation Section */}
+            {user?.role === 'admin' && (
+                <div className="sec-section">
+                    <div className="sec-section-header">
+                        <h2><Package size={22} /> Campus Listings Moderation (Cloud Admin Only)</h2>
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Filter items by title/category..."
+                                value={itemSearch}
+                                onChange={e => setItemSearch(e.target.value)}
+                                style={{ padding: '5px 12px', fontSize: '0.85rem', width: '220px' }}
+                            />
+                            <span style={{ fontSize: '0.85rem', color: 'var(--eco-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {allItems.length} Total Listings
+                            </span>
+                        </div>
+                    </div>
+                    <div className="audit-table-wrap">
+                        <table className="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Listing Item</th>
+                                    <th>Category</th>
+                                    <th>Owner / Contact</th>
+                                    <th>Transaction</th>
+                                    <th>Status</th>
+                                    <th>Administrative Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allItems
+                                    .filter(item => {
+                                        const query = itemSearch.toLowerCase();
+                                        return (
+                                            item.title?.toLowerCase().includes(query) ||
+                                            item.category?.toLowerCase().includes(query) ||
+                                            item.contact?.toLowerCase().includes(query)
+                                        );
+                                    })
+                                    .map(item => (
+                                        <tr key={item._id}>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <img
+                                                        src={item.imageUrl || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=80'}
+                                                        alt={item.title}
+                                                        style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover' }}
+                                                    />
+                                                    <div>
+                                                        <strong>{item.title}</strong>
+                                                        <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                            {item.condition} • {new Date(item.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{item.category}</td>
+                                            <td>
+                                                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                                                    {item.contact || item.postedBy?.email || 'Campus Student'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                                                    {item.transactionType} {item.price > 0 && `(₹${item.price})`}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`status-badge ${item.status === 'Available' ? 'badge-available' : 'badge-exchanged'}`} style={{ fontSize: '0.7rem', padding: '3px 8px' }}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-outline btn-sm"
+                                                        onClick={() => handleAdminToggleItemStatus(item._id, item.status)}
+                                                        style={{ padding: '3px 8px', fontSize: '0.78rem' }}
+                                                        title="Force status toggle"
+                                                    >
+                                                        Toggle
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleAdminDeleteItem(item._id, item.title)}
+                                                        disabled={deletingItemId === item._id}
+                                                        style={{ padding: '3px 8px', fontSize: '0.78rem' }}
+                                                        title="Permanently delete listing as Cloud Admin"
+                                                    >
+                                                        <Trash2 size={12} style={{ marginRight: 3 }} /> Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>

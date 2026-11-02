@@ -354,3 +354,50 @@
     color: var(--eco-primary);
     text-decoration: underline;
 }
+
+/* Cloud Admin Moderation Card Styles */
+.admin-badge-tag {
+    background-color: rgba(220, 38, 38, 0.95);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+}
+
+.admin-moderation-strip {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: #fef2f2;
+    border: 1px dashed #fca5a5;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.admin-strip-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #b91c1c;
+    letter-spacing: 0.5px;
+}
+
+.admin-strip-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-strip-btns .admin-btn {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}

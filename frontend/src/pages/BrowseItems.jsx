@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Filter, LayoutGrid, List } from 'lucide-react';
+import { Search, Filter, LayoutGrid, List, ShieldCheck } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
+import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../utils/config';
 import './BrowseItems.css';
 
 const CATEGORIES = ['All', 'Books', 'Electronics', 'Stationery', 'Furniture', 'Daily Use', 'Others'];
 
 const BrowseItems = () => {
+    const { user } = useAuth();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,12 +43,29 @@ const BrowseItems = () => {
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
 
+    const handleDeleteItem = (deletedId) => {
+        setItems(prev => prev.filter(i => i._id !== deletedId));
+    };
+
+    const handleStatusChange = (updatedId, newStatus) => {
+        setItems(prev => prev.map(i => i._id === updatedId ? { ...i, status: newStatus } : i));
+    };
+
     return (
         <div className="browse-page container">
             <div className="page-header">
                 <h1>Browse Items</h1>
                 <p>Find what you need or get inspired to reuse.</p>
             </div>
+
+            {user?.role === 'admin' && (
+                <div className="admin-browse-banner">
+                    <ShieldCheck size={20} className="admin-banner-icon" />
+                    <div className="admin-banner-text">
+                        <strong>Cloud Administrator Active:</strong> You have campus-wide authority to remove inappropriate listings or override exchange status directly on any card.
+                    </div>
+                </div>
+            )}
 
             <div className="filters-section">
                 <div className="search-bar">
@@ -100,7 +119,12 @@ const BrowseItems = () => {
                 <>
                     <div className={`items-container ${layout}`}>
                         {filteredAndSortedItems.map(item => (
-                            <ItemCard key={item._id} item={item} />
+                            <ItemCard
+                                key={item._id}
+                                item={item}
+                                onDelete={handleDeleteItem}
+                                onStatusChange={handleStatusChange}
+                            />
                         ))}
                     </div>
                     {filteredAndSortedItems.length === 0 && (

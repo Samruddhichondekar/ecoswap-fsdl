@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Item = require('../models/Item');
 const SecurityLog = require('../models/SecurityLog');
 const { logSecurityEvent } = require('../middleware/securityMiddleware');
 const { isS3Configured } = require('../services/s3Service');
@@ -121,11 +122,13 @@ exports.getIAMPolicy = async (_req, res) => {
  */
 exports.getSecurityStats = async (req, res) => {
     try {
-        const [totalLogs, loginSuccesses, loginFailures, apiKeyEvents] = await Promise.all([
+        const [totalLogs, loginSuccesses, loginFailures, adminActions, totalItems, activeItems] = await Promise.all([
             SecurityLog.countDocuments(),
             SecurityLog.countDocuments({ eventType: 'AUTH_LOGIN', status: 'SUCCESS' }),
             SecurityLog.countDocuments({ eventType: 'AUTH_LOGIN_FAILED', status: 'FAILURE' }),
-            SecurityLog.countDocuments({ eventType: { $in: ['API_KEY_GENERATED', 'API_KEY_ACCESS'] } }),
+            SecurityLog.countDocuments({ eventType: { $in: ['ADMIN_ITEM_DELETED', 'ADMIN_ITEM_UPDATED', 'ROLE_CHANGED'] } }),
+            Item.countDocuments(),
+            Item.countDocuments({ status: 'Available' }),
         ]);
 
         const totalUsers = await User.countDocuments();
@@ -137,7 +140,9 @@ exports.getSecurityStats = async (req, res) => {
             totalLogs,
             loginSuccesses,
             loginFailures,
-            apiKeyEvents,
+            adminActions,
+            totalItems,
+            activeItems,
             totalUsers,
             roleCounts: roleCounts.reduce((acc, r) => { acc[r._id] = r.count; return acc; }, {}),
         });

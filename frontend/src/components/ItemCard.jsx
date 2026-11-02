@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Book, Cpu, Coffee, Package, MapPin, Tag, X, Mail, Share2,
-    Eye, AlertCircle, Coins, HeartHandshake, ArrowLeftRight, Edit3, Send, Heart
+    Eye, AlertCircle, Coins, HeartHandshake, ArrowLeftRight, Edit3, Send, Heart,
+    Trash2, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,6 +46,12 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
     const [showContactModal, setShowContactModal] = useState(false);
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [views, setViews] = useState(item.views || 0);
+
+    // Administrative & status state
+    const [isDeleted, setIsDeleted] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState(item.status);
+    const actualIsOwner = isOwner || (user && item.postedBy && (item.postedBy._id || item.postedBy).toString() === user._id);
+    const isAdmin = user?.role === 'admin';
 
     // Wishlist state
     const [isSaved, setIsSaved] = useState(() => {
@@ -161,7 +168,43 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
         addToast('Listing link copied to clipboard!');
     };
 
-    const isAvailable = item.status === 'Available';
+    const handleAdminDelete = async (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const ok = window.confirm(
+            `[Cloud Admin Action]\n\nAre you sure you want to delete "${item.title}"?\nThis will remove the listing campus-wide and purge its cloud assets from AWS S3 and MongoDB Atlas.`
+        );
+        if (!ok) return;
+
+        try {
+            await axios.delete(`${API_URL}/items/${item._id}`, { headers: authHeaders });
+            addToast(`[Admin Action] Listing "${item.title}" deleted.`);
+            setIsDeleted(true);
+            if (onDelete) onDelete(item._id);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to delete listing.');
+        }
+    };
+
+    const handleAdminToggleStatus = async (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const nextStatus = currentStatus === 'Available' ? 'Exchanged' : 'Available';
+        try {
+            await axios.put(
+                `${API_URL}/items/${item._id}`,
+                { status: nextStatus },
+                { headers: authHeaders }
+            );
+            setCurrentStatus(nextStatus);
+            addToast(`[Admin Action] Status changed to "${nextStatus}".`);
+            if (onStatusChange) onStatusChange(item._id, nextStatus);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to update item status.');
+        }
+    };
+
+    if (isDeleted) return null;
+
+    const isAvailable = currentStatus === 'Available';
 
     return (
         <>
@@ -187,12 +230,17 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
 
                     <div className="badges-container top-right">
                         <div className={`status-badge ${isAvailable ? 'badge-available' : 'badge-exchanged'}`}>
-                            {item.status}
+                            {currentStatus}
                         </div>
                         {item.urgent && <div className="status-badge urgent-badge"><AlertCircle size={12} /> Urgent</div>}
+                        {isAdmin && !actualIsOwner && (
+                            <div className="status-badge admin-badge-tag" title="Cloud Admin Moderation Active">
+                                <ShieldCheck size={11} /> Admin Active
+                            </div>
+                        )}
                     </div>
 
-                    {!isOwner && (
+                    {!actualIsOwner && (
                         <button
                             type="button"
                             className={`wishlist-heart-btn ${isSaved ? 'active' : ''}`}
@@ -233,7 +281,7 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
                         </div>
                     )}
 
-                    {isOwner ? (
+                    {actualIsOwner ? (
                         <div className="owner-actions">
                             {onEdit && (
                                 <button
@@ -246,39 +294,75 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
                             )}
                             {isAvailable ? (
                                 <button
-                                    onClick={() => onStatusChange(item._id, 'Exchanged')}
+                                    onClick={() => {
+                                        setCurrentStatus('Exchanged');
+                                        if (onStatusChange) onStatusChange(item._id, 'Exchanged');
+                                    }}
                                     className="btn btn-secondary btn-sm"
                                 >
                                     Mark Exchanged
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => onStatusChange(item._id, 'Available')}
+                                    onClick={() => {
+                                        setCurrentStatus('Available');
+                                        if (onStatusChange) onStatusChange(item._id, 'Available');
+                                    }}
                                     className="btn btn-secondary btn-sm"
                                 >
                                     Mark Available
                                 </button>
                             )}
-                            <button onClick={() => onDelete(item._id)} className="btn btn-danger btn-sm">Delete</button>
+                            <button onClick={() => onDelete ? onDelete(item._id) : handleAdminDelete()} className="btn btn-danger btn-sm">Delete</button>
                         </div>
                     ) : (
-                        <div className="item-footer">
-                            <button onClick={handleShare} className="btn-icon" aria-label="Share" title="Share">
-                                <Share2 size={18} />
-                            </button>
-                            <button onClick={handleContactClick} className="btn btn-outline" style={{ flex: 1 }}>
-                                Contact
-                            </button>
-                            {isAvailable ? (
-                                <button onClick={handleOpenSwapModal} className="btn btn-primary" style={{ flex: 1.2 }}>
-                                    <ArrowLeftRight size={15} style={{ marginRight: 4 }} /> Request Swap
+                        <>
+                            <div className="item-footer">
+                                <button onClick={handleShare} className="btn-icon" aria-label="Share" title="Share">
+                                    <Share2 size={18} />
                                 </button>
-                            ) : (
-                                <button disabled className="btn btn-secondary" style={{ flex: 1.2, opacity: 0.6, cursor: 'not-allowed' }}>
-                                    Exchanged
+                                <button onClick={handleContactClick} className="btn btn-outline" style={{ flex: 1 }}>
+                                    Contact
                                 </button>
+                                {isAvailable ? (
+                                    <button onClick={handleOpenSwapModal} className="btn btn-primary" style={{ flex: 1.2 }}>
+                                        <ArrowLeftRight size={15} style={{ marginRight: 4 }} /> Request Swap
+                                    </button>
+                                ) : (
+                                    <button disabled className="btn btn-secondary" style={{ flex: 1.2, opacity: 0.6, cursor: 'not-allowed' }}>
+                                        Exchanged
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Cloud Admin Moderation Strip */}
+                            {isAdmin && (
+                                <div className="admin-moderation-strip">
+                                    <div className="admin-strip-label">
+                                        <ShieldAlert size={12} />
+                                        <span>Cloud Admin Moderation</span>
+                                    </div>
+                                    <div className="admin-strip-btns">
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline btn-sm admin-btn"
+                                            onClick={handleAdminToggleStatus}
+                                            title="Override listing status as Admin"
+                                        >
+                                            {isAvailable ? 'Mark Exchanged' : 'Mark Available'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-danger btn-sm admin-btn"
+                                            onClick={handleAdminDelete}
+                                            title="Permanently remove listing from campus as Admin"
+                                        >
+                                            <Trash2 size={13} style={{ marginRight: 3 }} /> Remove (Admin)
+                                        </button>
+                                    </div>
+                                </div>
                             )}
-                        </div>
+                        </>
                     )}
                 </div>
             </div>
