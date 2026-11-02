@@ -91,7 +91,7 @@ flowchart TD
 | **Task 3** | Infrastructure as a Service (IaaS) | AWS Cloud Infrastructure | Demonstrated via AWS EC2 compute instances and virtual networking. |
 | **Task 4** | Platform as a Service (PaaS) | **Render & Vercel** | EcoSwap backend deployed on Render; frontend deployed on Vercel with automatic CI/CD. |
 | **Task 5** | Security as a Service (SECaaS) | **Security Audit Logger & JWT** | Real-time audit trail, token encryption, CORS security policies, and 90-day TTL log auto-purge. |
-| **Task 6** | Identity & Access Management (IAM) | **RBAC Matrix & API Keys** | Role-based authorization (`user`, `admin`, `auditor`), SaaS programmatic API key generator. |
+| **Task 6** | Identity & Access Management (IAM) | **RBAC Matrix, Admin Moderation & SLA Telemetry** | Role-based authorization (`user`, `admin`, `auditor`), IAM User Administration, campus-wide listing moderation, and live Cloud SLA telemetry. |
 | **Task 7** | Storage as a Service (STaaS) | **Amazon S3 Cloud Storage** | Product image upload pipeline via AWS SDK v3, automatic object cleanup on deletion. |
 | **Task 8** | Database as a Service (DBaaS) | **MongoDB Atlas** | Fully managed MongoDB cloud cluster with connection resilience and replica set failover. |
 | **Task 9** | Containerisation (Docker) | **Multi-stage Dockerfile** | Production container build with `node:20-alpine`, non-root execution (`USER node`), and compose stack. |
@@ -114,9 +114,13 @@ flowchart TD
 
 #### 8.3 Identity & Access Management (IAM) & Security
 * **Authentication:** Passwords hashed with bcrypt (salt rounds = 12). Signed JWTs issued with 7-day expiration.
-* **Access Control:** Listing modification and deletion are strictly gated by `item.postedBy === req.user.userId`.
-* **Programmatic SaaS Access:** Users can generate unique `X-API-KEY` credentials to interact with API endpoints programmatically.
-* **Security Audit Trail:** Every authentication attempt, role transition, and API key generation is recorded in `SecurityLog` with IP address, user-agent, and status.
+* **Role-Based Access Control (RBAC):** Gated access control supporting three distinct profiles:
+  * `user`: Standard student profile with full barter, listing, and personal wishlist capabilities.
+  * `admin`: Cloud Administrator with campus-wide moderation authority to delete any inappropriate listing, override item exchange status, and promote/demote user IAM roles.
+  * `auditor`: Compliance auditor with read-only inspection of platform audit trails and security policies.
+* **Campus Listing Moderation:** Admins can purge any item directly from Browse cards or from the centralized Security dashboard. Deleting an item simultaneously removes database documents, cleans associated AWS S3 assets, and logs an `ADMIN_ITEM_DELETED` security audit record.
+* **Cloud Infrastructure Diagnostics & SLA Telemetry:** Real-time diagnostics monitor inspecting MongoDB Atlas DBaaS roundtrip ping latency, AWS S3 operational readiness, and Render PaaS process heap metrics.
+* **Security Audit Trail:** Every authentication attempt, role transition, and administrative item deletion is recorded in `SecurityLog` with IP address, user-agent, and status.
 
 ---
 
