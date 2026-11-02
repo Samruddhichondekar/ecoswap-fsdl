@@ -350,6 +350,78 @@
     background: var(--eco-secondary);
 }
 
+/* Quick Demo Credentials Box */
+.demo-credentials-box {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: var(--bg-secondary, #f8fafc);
+    border: 1px dashed var(--border-light, #cbd5e1);
+    border-radius: 10px;
+}
+
+.demo-box-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.6rem;
+}
+
+.demo-chips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.demo-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.75rem;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.demo-chip:hover {
+    border-color: var(--eco-primary, #16a34a);
+    background: #f0fdf4;
+    transform: translateY(-1px);
+}
+
+.demo-chip-role {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.demo-chip-role.admin {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.demo-chip-role.user {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.demo-chip-email {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+}
+
 @media (max-width: 900px) {
     .auth-page {
         grid-template-columns: 1fr;

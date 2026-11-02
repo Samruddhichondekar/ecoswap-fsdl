@@ -11,6 +11,8 @@ const authRoutes = require('./routes/authRoutes');
 const securityRoutes = require('./routes/securityRoutes');
 const swapRoutes = require('./routes/swapRoutes');
 const Item = require('./models/Item');
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const server = http.createServer(app);
@@ -145,7 +147,53 @@ const daysAgo = (n) => {
     return d;
 };
 
+const seedUsers = async () => {
+    const defaultUsers = [
+        {
+            name: 'Campus Admin',
+            email: 'admin@fcrit.ac.in',
+            password: 'Password123!',
+            role: 'admin',
+        },
+        {
+            name: 'Samruddhi Chondekar',
+            email: 's@gmail.com',
+            password: 'Password123!',
+            role: 'admin',
+        },
+        {
+            name: 'Student User',
+            email: 'student@fcrit.ac.in',
+            password: 'Password123!',
+            role: 'user',
+        },
+    ];
+
+    for (const u of defaultUsers) {
+        const existing = await User.findOne({ email: u.email });
+        const passwordHash = await bcrypt.hash(u.password, 12);
+        if (!existing) {
+            await User.create({
+                name: u.name,
+                email: u.email,
+                passwordHash,
+                role: u.role,
+                wishlist: [],
+            });
+            console.log(`[Seed] Created default user: ${u.email} (${u.role})`);
+        } else {
+            // Synchronize password and role for demo accounts
+            existing.passwordHash = passwordHash;
+            existing.role = u.role;
+            await existing.save();
+            console.log(`[Seed] Synchronized credentials for: ${u.email}`);
+        }
+    }
+};
+
 const seedDatabase = async () => {
+    await seedUsers();
+
     const existingCount = await Item.countDocuments();
     if (existingCount > 0) {
         console.log(`Seed skipped: ${existingCount} item(s) already exist.`);
@@ -394,7 +442,7 @@ const seedDatabase = async () => {
 // ── DB Connection (DBaaS & Resilient Fallback) ─────────────────
 const connectDB = async () => {
     try {
-        let mongoUri = process.env.MONGO_URI;
+        let mongoUri = process.env.MONGO_URI || 'mongodb+srv://ecoswap_admin:samruddhi123@cluster0.iu1vvub.mongodb.net/ecoswap?retryWrites=true&w=majority';
         let connected = false;
 
         if (mongoUri && (mongoUri.startsWith('mongodb+srv://') || mongoUri.includes('mongodb.net'))) {

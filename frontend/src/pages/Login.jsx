@@ -20,6 +20,12 @@ const Login = () => {
         if (error) setError('');
     };
 
+    const fillDemo = (email, password) => {
+        setFormData({ email, password });
+        if (error) setError('');
+        addToast(`Demo login filled: ${email}`);
+    };
+
     const validate = () => {
         if (!formData.email.trim() || !formData.password) return 'Enter your email and password.';
         if (!/\S+@\S+\.\S+/.test(formData.email)) return 'Enter a valid email address.';
@@ -119,6 +125,40 @@ const Login = () => {
                             {loading ? <><span className="auth-spinner"></span> Signing in...</> : <>Sign In <ArrowRight size={18} /></>}
                         </button>
                     </form>
+
+                    {/* Quick-Fill Demo Credentials */}
+                    <div className="demo-credentials-box">
+                        <div className="demo-box-header">
+                            <ShieldCheck size={14} color="#16a34a" />
+                            <span>Quick Demo Logins (Click to Fill)</span>
+                        </div>
+                        <div className="demo-chips-grid">
+                            <button
+                                type="button"
+                                className="demo-chip"
+                                onClick={() => fillDemo('s@gmail.com', 'Password123!')}
+                            >
+                                <span className="demo-chip-role admin">Admin</span>
+                                <span className="demo-chip-email">s@gmail.com</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="demo-chip"
+                                onClick={() => fillDemo('admin@fcrit.ac.in', 'Password123!')}
+                            >
+                                <span className="demo-chip-role admin">Campus Admin</span>
+                                <span className="demo-chip-email">admin@fcrit.ac.in</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="demo-chip"
+                                onClick={() => fillDemo('student@fcrit.ac.in', 'Password123!')}
+                            >
+                                <span className="demo-chip-role user">Student</span>
+                                <span className="demo-chip-email">student@fcrit.ac.in</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <div className="auth-footer">
                         <p>Don't have an account? <Link to="/signup" className="auth-link">Create one free</Link></p>
