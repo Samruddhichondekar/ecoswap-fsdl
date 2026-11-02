@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Book, Cpu, Coffee, Package, MapPin, Tag, X, Mail, Share2,
-    Eye, AlertCircle, Coins, HeartHandshake, ArrowLeftRight, Edit3, Send
+    Eye, AlertCircle, Coins, HeartHandshake, ArrowLeftRight, Edit3, Send, Heart
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,14 +37,59 @@ const getRelativeTime = (dateStr) => {
     return `${days} days ago`;
 };
 
-const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit }) => {
+const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isWishlisted, onWishlistToggle }) => {
     const navigate = useNavigate();
-    const { user, isAuthenticated, authHeaders } = useAuth();
+    const { user, isAuthenticated, authHeaders, updateWishlist } = useAuth();
     const { addToast } = useContext(ToastContext);
 
     const [showContactModal, setShowContactModal] = useState(false);
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [views, setViews] = useState(item.views || 0);
+
+    // Wishlist state
+    const [isSaved, setIsSaved] = useState(() => {
+        if (typeof isWishlisted === 'boolean') return isWishlisted;
+        if (user?.wishlist && Array.isArray(user.wishlist)) {
+            return user.wishlist.some(id => (typeof id === 'string' ? id : id?._id || id) === item._id);
+        }
+        return false;
+    });
+    const [togglingWishlist, setTogglingWishlist] = useState(false);
+
+    useEffect(() => {
+        if (typeof isWishlisted === 'boolean') {
+            setIsSaved(isWishlisted);
+        } else if (user?.wishlist && Array.isArray(user.wishlist)) {
+            setIsSaved(user.wishlist.some(id => (typeof id === 'string' ? id : id?._id || id) === item._id));
+        }
+    }, [isWishlisted, user?.wishlist, item._id]);
+
+    const handleToggleWishlist = async (e) => {
+        e.stopPropagation();
+        if (!isAuthenticated) {
+            addToast('Please log in to save items to your wishlist.');
+            navigate('/login');
+            return;
+        }
+        if (togglingWishlist) return;
+        setTogglingWishlist(true);
+        try {
+            const res = await axios.post(`${API_URL}/items/${item._id}/wishlist`, {}, { headers: authHeaders });
+            const nextSaved = res.data.saved;
+            setIsSaved(nextSaved);
+            if (updateWishlist && res.data.wishlist) {
+                updateWishlist(res.data.wishlist);
+            }
+            if (onWishlistToggle) {
+                onWishlistToggle(item._id, nextSaved);
+            }
+            addToast(res.data.message || (nextSaved ? 'Added to Wishlist!' : 'Removed from Wishlist.'));
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to update wishlist.');
+        } finally {
+            setTogglingWishlist(false);
+        }
+    };
 
     // Swap request form state
     const [myItems, setMyItems] = useState([]);
@@ -146,6 +191,19 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit }) =
                         </div>
                         {item.urgent && <div className="status-badge urgent-badge"><AlertCircle size={12} /> Urgent</div>}
                     </div>
+
+                    {!isOwner && (
+                        <button
+                            type="button"
+                            className={`wishlist-heart-btn ${isSaved ? 'active' : ''}`}
+                            onClick={handleToggleWishlist}
+                            title={isSaved ? 'Remove from Wishlist' : 'Save to Wishlist'}
+                            aria-label="Wishlist"
+                            disabled={togglingWishlist}
+                        >
+                            <Heart size={18} fill={isSaved ? '#ef4444' : 'none'} color={isSaved ? '#ef4444' : 'currentColor'} />
+                        </button>
+                    )}
                 </div>
 
                 <div className="item-content">

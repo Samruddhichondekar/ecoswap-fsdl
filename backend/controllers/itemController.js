@@ -1,4 +1,5 @@
 const Item = require('../models/Item');
+const User = require('../models/User');
 const { uploadFileToS3, deleteFileFromS3 } = require('../services/s3Service');
 
 /**
@@ -134,6 +135,52 @@ exports.deleteItem = async (req, res) => {
 
         await item.deleteOne();
         res.json({ message: 'Item deleted and associated cloud assets purged.' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+/**
+ * POST /api/items/:id/wishlist
+ * Toggle an item in the current user's Wishlist.
+ */
+exports.toggleWishlist = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        const itemId = req.params.id;
+        const exists = user.wishlist.some(id => id.toString() === itemId);
+        let saved = false;
+
+        if (exists) {
+            user.wishlist = user.wishlist.filter(id => id.toString() !== itemId);
+            saved = false;
+        } else {
+            user.wishlist.push(itemId);
+            saved = true;
+        }
+
+        await user.save();
+        res.json({
+            saved,
+            wishlist: user.wishlist,
+            message: saved ? 'Added to Wishlist!' : 'Removed from Wishlist.'
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+/**
+ * GET /api/items/wishlist
+ * Get all items saved in current user's Wishlist.
+ */
+exports.getWishlist = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).populate('wishlist');
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+        res.json(user.wishlist || []);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

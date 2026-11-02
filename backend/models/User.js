@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
         default: 'user',
     },
 
-    // SaaS API Key for programmatic access
-    apiKey: { type: String, default: '' },
+    // Student Wishlist / Bookmarked Items
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

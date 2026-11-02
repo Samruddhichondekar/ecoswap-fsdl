@@ -52,6 +52,7 @@ export const AuthProvider = ({ children }) => {
                     name: res.data.name,
                     email: res.data.email,
                     role: res.data.role || 'user',
+                    wishlist: res.data.wishlist || [],
                 };
                 setUser(validatedUser);
                 setToken(storedToken);
@@ -100,6 +101,15 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
+    const updateWishlist = useCallback((newWishlist) => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const updated = { ...prev, wishlist: newWishlist };
+            localStorage.setItem('ecoswap_user', JSON.stringify(updated));
+            return updated;
+        });
+    }, []);
+
     const authHeaders = useMemo(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
     useEffect(() => {
@@ -117,6 +127,7 @@ export const AuthProvider = ({ children }) => {
             login,
             register,
             logout,
+            updateWishlist,
             authHeaders,
             isAuthenticated: !!user,
             loading,

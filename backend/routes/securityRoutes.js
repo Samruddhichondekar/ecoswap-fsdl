@@ -16,6 +16,9 @@ router.get('/iam-policy', securityController.getIAMPolicy);
 // Security dashboard stats
 router.get('/stats', securityController.getSecurityStats);
 
+// Cloud Infrastructure & SLA Telemetry Diagnostics
+router.get('/diagnostics', securityController.getCloudDiagnostics);
+
 // Generate a new API key (SaaS feature)
 router.post('/api-key', securityController.generateApiKey);
 

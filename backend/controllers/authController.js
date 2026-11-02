@@ -55,7 +55,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({
             token,
-            user: { _id: user._id, name: user.name, email: user.email, role: user.role }
+            user: { _id: user._id, name: user.name, email: user.email, role: user.role, wishlist: user.wishlist || [] }
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -113,7 +113,7 @@ exports.login = async (req, res) => {
 
         res.json({
             token,
-            user: { _id: user._id, name: user.name, email: user.email, role: user.role }
+            user: { _id: user._id, name: user.name, email: user.email, role: user.role, wishlist: user.wishlist || [] }
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -155,6 +155,7 @@ exports.updateProfile = async (req, res) => {
                 role: user.role,
                 bio: user.bio,
                 avatar: user.avatar,
+                wishlist: user.wishlist || [],
             }
         });
     } catch (err) {

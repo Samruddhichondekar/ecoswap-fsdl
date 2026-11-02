@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
 import {
     PackageOpen, Layers, Inbox, Send, CheckCircle2, XCircle,
-    ArrowLeftRight, Clock, Edit3, X, Save
+    ArrowLeftRight, Clock, Edit3, X, Save, Heart
 } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,6 +22,7 @@ const MyItems = () => {
     const [items, setItems] = useState([]);
     const [receivedSwaps, setReceivedSwaps] = useState([]);
     const [sentSwaps, setSentSwaps] = useState([]);
+    const [wishlistItems, setWishlistItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -44,14 +45,16 @@ const MyItems = () => {
         setLoading(true);
         setError('');
         try {
-            const [itemsRes, receivedRes, sentRes] = await Promise.all([
+            const [itemsRes, receivedRes, sentRes, wishlistRes] = await Promise.all([
                 axios.get(`${API_URL}/items`, { params: { userId: user._id }, headers: authHeaders }),
                 axios.get(`${API_URL}/swaps/received`, { headers: authHeaders }),
                 axios.get(`${API_URL}/swaps/sent`, { headers: authHeaders }),
+                axios.get(`${API_URL}/items/wishlist`, { headers: authHeaders }),
             ]);
             setItems(itemsRes.data || []);
             setReceivedSwaps(receivedRes.data || []);
             setSentSwaps(sentRes.data || []);
+            setWishlistItems(wishlistRes.data || []);
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
             setError(err.response?.data?.message || 'Could not load your dashboard data.');
@@ -202,6 +205,16 @@ const MyItems = () => {
                         <span className="dash-stat-lbl">Completed Swaps</span>
                     </div>
                 </div>
+
+                <div className="dash-stat-card">
+                    <div className="dash-stat-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
+                        <Heart size={22} />
+                    </div>
+                    <div className="dash-stat-info">
+                        <span className="dash-stat-val">{wishlistItems.length}</span>
+                        <span className="dash-stat-lbl">Saved Wishlist</span>
+                    </div>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -224,6 +237,12 @@ const MyItems = () => {
                     onClick={() => setActiveTab('sent')}
                 >
                     <Send size={18} /> Sent Requests <span className="tab-badge">{sentSwaps.length}</span>
+                </button>
+                <button
+                    className={`dash-tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('wishlist')}
+                >
+                    <Heart size={18} /> Wishlist <span className="tab-badge">{wishlistItems.length}</span>
                 </button>
             </div>
 
@@ -426,6 +445,34 @@ const MyItems = () => {
                                 </div>
                             )}
                         </div>
+                    )}
+
+                    {/* TAB 4: WISHLIST */}
+                    {activeTab === 'wishlist' && (
+                        <>
+                            <div className="items-grid">
+                                {wishlistItems.map(item => (
+                                    <ItemCard
+                                        key={item._id}
+                                        item={item}
+                                        isOwner={false}
+                                        isWishlisted={true}
+                                        onWishlistToggle={(itemId, saved) => {
+                                            if (!saved) {
+                                                setWishlistItems(prev => prev.filter(i => i._id !== itemId));
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            {wishlistItems.length === 0 && (
+                                <div className="empty-state">
+                                    <Heart size={48} className="empty-icon" style={{ color: '#ef4444' }} />
+                                    <h3>Your Wishlist is empty</h3>
+                                    <p>Browse campus items and click the heart icon on any listing to bookmark it here!</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             )}
