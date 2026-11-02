@@ -103,6 +103,26 @@ const CloudSecurity = () => {
         }
     };
 
+    const handleAdminAcceptItem = async (itemId, itemTitle) => {
+        try {
+            const res = await axios.put(
+                `${API_URL}/items/${itemId}`,
+                { status: 'Available' },
+                { headers: authHeaders }
+            );
+            setAllItems(prev => prev.map(i => i._id === itemId ? res.data : i));
+            addToast(`[Admin] Accepted "${itemTitle}"! Now active for campus exchange.`);
+            const [logsRes, statsRes] = await Promise.all([
+                axios.get(`${API_URL}/security/logs?limit=50`, { headers: authHeaders }),
+                axios.get(`${API_URL}/security/stats`, { headers: authHeaders }),
+            ]);
+            setLogs(logsRes.data);
+            setStats(statsRes.data);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to accept item.');
+        }
+    };
+
     const handleAdminToggleItemStatus = async (itemId, currentStatus) => {
         const nextStatus = currentStatus === 'Available' ? 'Exchanged' : 'Available';
         try {
@@ -362,21 +382,33 @@ const CloudSecurity = () => {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`status-badge ${item.status === 'Available' ? 'badge-available' : 'badge-exchanged'}`} style={{ fontSize: '0.7rem', padding: '3px 8px' }}>
+                                                <span className={`status-badge ${item.status === 'Available' ? 'badge-available' : (item.status === 'Pending Approval' ? 'badge-pending' : 'badge-exchanged')}`} style={{ fontSize: '0.7rem', padding: '3px 8px' }}>
                                                     {item.status}
                                                 </span>
                                             </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '6px' }}>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-outline btn-sm"
-                                                        onClick={() => handleAdminToggleItemStatus(item._id, item.status)}
-                                                        style={{ padding: '3px 8px', fontSize: '0.78rem' }}
-                                                        title="Force status toggle"
-                                                    >
-                                                        Toggle
-                                                    </button>
+                                                    {item.status === 'Pending Approval' ? (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-success btn-sm"
+                                                            onClick={() => handleAdminAcceptItem(item._id, item.title)}
+                                                            style={{ padding: '3px 8px', fontSize: '0.78rem', background: '#16a34a', color: '#fff', borderColor: '#16a34a', fontWeight: 600 }}
+                                                            title="Accept and approve this listing for campus exchange"
+                                                        >
+                                                            <CheckCircle2 size={12} style={{ marginRight: 3 }} /> Accept
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline btn-sm"
+                                                            onClick={() => handleAdminToggleItemStatus(item._id, item.status)}
+                                                            style={{ padding: '3px 8px', fontSize: '0.78rem' }}
+                                                            title="Force status toggle"
+                                                        >
+                                                            Toggle
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="btn btn-danger btn-sm"

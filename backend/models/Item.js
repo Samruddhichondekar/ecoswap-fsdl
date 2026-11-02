@@ -9,7 +9,7 @@ const itemSchema = new mongoose.Schema({
     imageUrl: { type: String, required: true },
     s3Key: { type: String, default: '' },
     contact: { type: String, required: true },
-    status: { type: String, enum: ['Available', 'Exchanged'], default: 'Available' },
+    status: { type: String, enum: ['Pending Approval', 'Available', 'Exchanged'], default: 'Pending Approval' },
 
     // Advanced features
     transactionType: { type: String, enum: ['Donate', 'Sell', 'Barter', 'Rent'], default: 'Donate' },

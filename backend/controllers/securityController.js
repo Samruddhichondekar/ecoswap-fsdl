@@ -126,7 +126,7 @@ exports.getSecurityStats = async (req, res) => {
             SecurityLog.countDocuments(),
             SecurityLog.countDocuments({ eventType: 'AUTH_LOGIN', status: 'SUCCESS' }),
             SecurityLog.countDocuments({ eventType: 'AUTH_LOGIN_FAILED', status: 'FAILURE' }),
-            SecurityLog.countDocuments({ eventType: { $in: ['ADMIN_ITEM_DELETED', 'ADMIN_ITEM_UPDATED', 'ROLE_CHANGED'] } }),
+            SecurityLog.countDocuments({ eventType: { $in: ['ADMIN_ITEM_DELETED', 'ADMIN_ITEM_UPDATED', 'ADMIN_ITEM_APPROVED', 'ROLE_CHANGED'] } }),
             Item.countDocuments(),
             Item.countDocuments({ status: 'Available' }),
         ]);

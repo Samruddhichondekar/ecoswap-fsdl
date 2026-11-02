@@ -54,8 +54,11 @@ exports.getItemById = async (req, res) => {
 
 exports.createItem = async (req, res) => {
     try {
+        const isAdmin = req.user.role === 'admin';
+        const initialStatus = isAdmin ? (req.body.status || 'Available') : 'Pending Approval';
         const itemData = {
             ...req.body,
+            status: initialStatus,
             title: req.body.title?.trim(),
             description: req.body.description?.trim(),
             location: req.body.location?.trim(),
@@ -114,14 +117,17 @@ exports.updateItem = async (req, res) => {
         const updatedItem = await item.save();
 
         if (isAdmin && !isOwner) {
+            const isApproval = req.body.status === 'Available' && item.status === 'Pending Approval';
             await logSecurityEvent({
-                eventType: 'ADMIN_ITEM_UPDATED',
+                eventType: isApproval ? 'ADMIN_ITEM_APPROVED' : 'ADMIN_ITEM_UPDATED',
                 userId: req.user.userId,
                 userEmail: req.user.email,
                 ipAddress: req.ip || '',
                 userAgent: req.headers['user-agent'] || '',
                 status: 'SUCCESS',
-                details: `Admin updated listing "${item.title}" (status: ${item.status})`,
+                details: isApproval
+                    ? `Admin approved listing "${item.title}" for campus exchange`
+                    : `Admin updated listing "${item.title}" (status: ${item.status})`,
             });
         }
 

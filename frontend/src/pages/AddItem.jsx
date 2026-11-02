@@ -123,7 +123,11 @@ const AddItem = () => {
             await axios.post(`${API_URL}/items`, processedData, {
                 headers: authHeaders
             });
-            addToast('Listing created successfully!');
+            if (user?.role === 'admin') {
+                addToast('Listing created and active for campus exchange!');
+            } else {
+                addToast('Item submitted! Pending Admin acceptance before exchange.');
+            }
             navigate('/my-items');
         } catch (err) {
             setError(err.response?.data?.message || 'An error occurred while adding the item.');

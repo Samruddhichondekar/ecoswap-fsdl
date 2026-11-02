@@ -18,6 +18,7 @@ const securityLogSchema = new mongoose.Schema({
             'ITEM_DELETED',
             'ADMIN_ITEM_DELETED',
             'ADMIN_ITEM_UPDATED',
+            'ADMIN_ITEM_APPROVED',
         ],
     },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },

@@ -311,3 +311,9 @@
         flex-direction: column;
     }
 }
+
+.badge-pending {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}

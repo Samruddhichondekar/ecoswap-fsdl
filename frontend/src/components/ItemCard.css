@@ -57,6 +57,11 @@
     color: white;
 }
 
+.badge-pending {
+    background-color: rgba(217, 119, 6, 0.95);
+    color: white;
+}
+
 .badge-exchanged {
     background-color: rgba(100, 116, 139, 0.9);
     color: white;

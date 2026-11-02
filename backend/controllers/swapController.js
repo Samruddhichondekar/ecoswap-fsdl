@@ -19,6 +19,9 @@ exports.createSwapRequest = async (req, res) => {
             return res.status(404).json({ message: 'Requested item not found.' });
         }
 
+        if (itemRequested.status === 'Pending Approval') {
+            return res.status(400).json({ message: 'This item is awaiting Admin approval before students can exchange it.' });
+        }
         if (itemRequested.status !== 'Available') {
             return res.status(400).json({ message: 'This item is no longer available for exchange.' });
         }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Book, Cpu, Coffee, Package, MapPin, Tag, X, Mail, Share2,
     Eye, AlertCircle, Coins, HeartHandshake, ArrowLeftRight, Edit3, Send, Heart,
-    Trash2, ShieldAlert, ShieldCheck
+    Trash2, ShieldAlert, ShieldCheck, CheckCircle2, Clock
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
@@ -202,9 +202,25 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
         }
     };
 
+    const handleAdminAcceptItem = async () => {
+        try {
+            await axios.put(
+                `${API_URL}/items/${item._id}`,
+                { status: 'Available' },
+                { headers: authHeaders }
+            );
+            setCurrentStatus('Available');
+            if (onStatusChange) onStatusChange(item._id, 'Available');
+            addToast(`[Admin] Successfully accepted "${item.title}" for campus exchange!`);
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to accept item.');
+        }
+    };
+
     if (isDeleted) return null;
 
     const isAvailable = currentStatus === 'Available';
+    const isPendingApproval = currentStatus === 'Pending Approval';
 
     return (
         <>
@@ -229,8 +245,8 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
                     </div>
 
                     <div className="badges-container top-right">
-                        <div className={`status-badge ${isAvailable ? 'badge-available' : 'badge-exchanged'}`}>
-                            {currentStatus}
+                        <div className={`status-badge ${isAvailable ? 'badge-available' : (isPendingApproval ? 'badge-pending' : 'badge-exchanged')}`}>
+                            {isPendingApproval ? 'Pending Approval' : currentStatus}
                         </div>
                         {item.urgent && <div className="status-badge urgent-badge"><AlertCircle size={12} /> Urgent</div>}
                         {isAdmin && !actualIsOwner && (
@@ -328,6 +344,10 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
                                     <button onClick={handleOpenSwapModal} className="btn btn-primary" style={{ flex: 1.2 }}>
                                         <ArrowLeftRight size={15} style={{ marginRight: 4 }} /> Request Swap
                                     </button>
+                                ) : isPendingApproval ? (
+                                    <button disabled className="btn btn-secondary" style={{ flex: 1.2, opacity: 0.75, cursor: 'not-allowed', background: '#d97706', color: '#fff', border: 'none' }} title="This item is awaiting Admin approval before students can exchange it.">
+                                        <Clock size={14} style={{ marginRight: 4 }} /> Awaiting Admin
+                                    </button>
                                 ) : (
                                     <button disabled className="btn btn-secondary" style={{ flex: 1.2, opacity: 0.6, cursor: 'not-allowed' }}>
                                         Exchanged
@@ -343,14 +363,26 @@ const ItemCard = ({ item, isOwner = false, onDelete, onStatusChange, onEdit, isW
                                         <span>Cloud Admin Moderation</span>
                                     </div>
                                     <div className="admin-strip-btns">
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline btn-sm admin-btn"
-                                            onClick={handleAdminToggleStatus}
-                                            title="Override listing status as Admin"
-                                        >
-                                            {isAvailable ? 'Mark Exchanged' : 'Mark Available'}
-                                        </button>
+                                        {isPendingApproval ? (
+                                            <button
+                                                type="button"
+                                                className="btn btn-success btn-sm admin-btn"
+                                                style={{ backgroundColor: '#16a34a', borderColor: '#16a34a', color: 'white', fontWeight: 600 }}
+                                                onClick={handleAdminAcceptItem}
+                                                title="Accept and approve this listing for campus exchange"
+                                            >
+                                                <CheckCircle2 size={13} style={{ marginRight: 3 }} /> Accept Item (Admin)
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline btn-sm admin-btn"
+                                                onClick={handleAdminToggleStatus}
+                                                title="Override listing status as Admin"
+                                            >
+                                                {isAvailable ? 'Mark Exchanged' : 'Mark Available'}
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             className="btn btn-danger btn-sm admin-btn"
